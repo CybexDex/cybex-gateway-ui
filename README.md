@@ -4,6 +4,10 @@
 
 填入网关地址和在网关admin中配入的某个token后可以操作。
 
+## 简单使用
+
+用http服务器 dist/index.html
+
 ## Project setup
 ```
 npm install
