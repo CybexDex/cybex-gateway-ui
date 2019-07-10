@@ -8,7 +8,7 @@
         <span>{{Math.ceil(total/20)-1}}页</span>
         <el-button @click="lastPage()">上一页</el-button>
         <div id="searchBar2">
-          <el-input v-model="page" size="mini" placeholder="第n页" @keyup.enter.native="searchConfirm(page)" />
+          <el-input  size="mini" placeholder="第n页" v-model.number="page" type="number" @keyup.enter.native="searchConfirm(page)" />
         </div>
         <el-button @click="nextPage()">下一页</el-button>
       </div>
