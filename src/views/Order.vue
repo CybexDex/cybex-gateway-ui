@@ -3,18 +3,25 @@
     <!-- <HelloWorld msg="Welcome to Your Vue.js App"/> -->
     <div>
       <div id="searchBar">
-        <el-button @click="dosearch()" >搜索</el-button>
+        <el-button @click="dosearch()">搜索</el-button>
+        <span>{{total}}条,</span>
+        <span>{{Math.ceil(total/20)-1}}页</span>
+        <el-button @click="lastPage()">上一页</el-button>
+        <div id="searchBar2">
+          <el-input v-model="page" size="mini" placeholder="第n页" @keyup.enter.native="searchConfirm(page)" />
+        </div>
+        <el-button @click="nextPage()">下一页</el-button>
       </div>
-      <Header/>
+      <Header />
     </div>
     <div>
       <el-table
-        height="500"
+
         :data="tableData"
         style="width: 100%"
         :row-class-name="tableRowClassName"
       >
-        <el-table-column prop="ID" label="ID" ></el-table-column>
+        <el-table-column prop="ID" label="ID"></el-table-column>
         <el-table-column prop="type" label="业务类型"></el-table-column>
         <el-table-column prop="asset" label="币种"></el-table-column>
         <el-table-column prop="user" label="用户名"></el-table-column>
@@ -23,37 +30,43 @@
         <el-table-column prop="fee" label="fee"></el-table-column>
         <el-table-column prop="memo" label="memo"></el-table-column>
         <el-table-column prop="hash" label="hash"></el-table-column>
-         <el-table-column prop="cybhash" label="cybhash"></el-table-column>
+        <el-table-column prop="cybhash" label="cybhash"></el-table-column>
         <el-table-column prop="status" label="status"></el-table-column>
-  <el-table-column
-      fixed="right"
-      label="操作"
-      width="100">
-      <template slot-scope="scope">
-        <el-button @click="handleClick(scope.row)" type="text" size="small">详情</el-button>
-      </template>
-    </el-table-column>
+        <el-table-column fixed="right" label="操作" width="100">
+          <template slot-scope="scope">
+            <el-button @click="handleClick(scope.row)" type="text" size="small">详情</el-button>
+          </template>
+        </el-table-column>
       </el-table>
     </div>
     <el-dialog title="搜索" :visible.sync="dialogFormVisible">
-            <div >
+      <div>
         <el-button @click="dialogFormVisible = false">取 消</el-button>
         <el-button type="primary" @click="searchConfirm">确 定</el-button>
       </div>
       <el-row>
-        <el-col :span="12"><div class="grid-content bg-purple">
-           搜索：
-           <el-input type="textarea" autosize placeholder="请输入内容" v-model="searchContent"></el-input>
-          </div></el-col>
-        <el-col :span="12"><div class="grid-content bg-purple-light">
+        <el-col :span="12">
+          <div class="grid-content bg-purple">
+            搜索：
+            <el-input type="textarea" autosize placeholder="请输入内容" v-model="searchContent"></el-input>
+          </div>
+        </el-col>
+        <el-col :span="12">
+          <div class="grid-content bg-purple-light">
             例子：
-           <el-input type="textarea" autosize placeholder="请输入内容" :disabled="true" v-model="preCreateAsset"></el-input>
-          </div></el-col>
+            <el-input
+              type="textarea"
+              autosize
+              placeholder="请输入内容"
+              :disabled="true"
+              v-model="preCreateAsset"
+            ></el-input>
+          </div>
+        </el-col>
       </el-row>
-    
     </el-dialog>
     <el-dialog title="订单" :visible.sync="updateVisible">
-      <el-input type="textarea" autosize placeholder="请输入内容"  v-model="preUpdateAsset"></el-input>
+      <el-input type="textarea" autosize placeholder="请输入内容" v-model="preUpdateAsset"></el-input>
       <div slot="footer" class="dialog-footer">
         <el-button @click="updateVisible = false">好的</el-button>
       </div>
@@ -63,7 +76,7 @@
 
 <script>
 // @ is an alias to /src
-import Header from '@/components/Header.vue'
+import Header from "@/components/Header.vue";
 import axios from "axios";
 import searchOrder from "./searchOrder";
 let tokenType = "localStorage";
@@ -78,16 +91,19 @@ export default {
       updateVisible: false,
       searchOrder: searchOrder,
       preCreateAsset: "",
-      searchContent: "",
+      searchContent: "{}",
       preUpdateAsset: "",
-      search: ""
+      search: "",
+      total: "",
+      page: 0,
+      pagesize: 20
     };
   },
   components: {
     Header
   },
   methods: {
-    handleClick(row){
+    handleClick(row) {
       let copy = Object.assign({}, row);
       this.preUpdateAsset = JSON.stringify(copy, null, 2);
       this.updateVisible = true;
@@ -97,11 +113,23 @@ export default {
         return "warning-row";
       }
     },
-    changeHost(){
+    lastPage() {
+      this.page = this.page > 0 ? this.page - 1 : this.page;
+      let data = JSON.parse(this.searchContent);
+      data.offset = 20 * this.page;
+      this.loadOrders(data);
+    },
+    nextPage() {
+      this.page = this.page + 1;
+      let data = JSON.parse(this.searchContent);
+      data.offset = 20 * this.page;
+      this.loadOrders(data);
+    },
+    changeHost() {
       let gatewayHost = prompt(`请输入gatewayHost,当前${this.gatewayHost}`);
-      if (gatewayHost != null && gatewayHost !== "null" && gatewayHost !== ""){
-        this.gatewayHost = gatewayHost
-        this.saveHost(this.gatewayHost)
+      if (gatewayHost != null && gatewayHost !== "null" && gatewayHost !== "") {
+        this.gatewayHost = gatewayHost;
+        this.saveHost(this.gatewayHost);
       }
     },
     isOpenClass(isOpen) {
@@ -146,13 +174,16 @@ export default {
         alert("请求失败");
       }
     },
-    async searchConfirm() {
+    async searchConfirm(page) {
       let data = null;
       try {
         data = JSON.parse(this.searchContent);
       } catch (e) {
         alert("不是合法的json");
         return;
+      }
+      if (page){
+        data.offset = page * 20
       }
       try {
         this.loadOrders(data);
@@ -174,6 +205,7 @@ export default {
       });
       console.log(s);
       this.tableData = s.data.data;
+      this.total = s.data.total;
     },
     getHost() {
       let gatewayHost = window[tokenType].getItem("gatewayHost");
@@ -198,8 +230,8 @@ export default {
     saveToken(token) {
       window[tokenType].setItem("token", token);
     },
-    saveHost(gatewayHost){
-    window[tokenType].setItem("gatewayHost", gatewayHost);
+    saveHost(gatewayHost) {
+      window[tokenType].setItem("gatewayHost", gatewayHost);
     },
     clearToken() {
       window[tokenType].removeItem("token");
@@ -207,17 +239,24 @@ export default {
     }
   },
   async mounted() {
-    this.getHost()
-    this.getToken()
-    this.loadOrders({})
+    this.getHost();
+    this.getToken();
+    this.loadOrders({});
   }
 };
 </script>
 <style scoped>
 #searchBar {
   display: inline-block;
-  width: 20%;
+  width: 30%;
   margin-left: 10px;
+  height: 40px;
+}
+#searchBar2 {
+  display: inline-block;
+  width: 90px;
+  margin-left: 10px;
+    margin-right: 10px;
   height: 40px;
 }
 </style>
