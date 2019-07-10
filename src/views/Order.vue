@@ -8,19 +8,21 @@
         <span>{{Math.ceil(total/20)-1}}页</span>
         <el-button @click="lastPage()">上一页</el-button>
         <div id="searchBar2">
-          <el-input  size="mini" placeholder="第n页" v-model.number="page" type="number" @keyup.enter.native="searchConfirm(page)" />
+          <el-input
+            size="mini"
+            placeholder="第n页"
+            v-model.number="page"
+            type="number"
+            @keyup.enter.native="searchConfirm(page)"
+          />
         </div>
         <el-button @click="nextPage()">下一页</el-button>
       </div>
       <Header />
     </div>
     <div>
-      <el-table
-
-        :data="tableData"
-        style="width: 100%"
-        :row-class-name="tableRowClassName"
-      >
+      <el-table :data="tableData" style="width: 100%" :row-class-name="tableRowClassName">
+        <template slot="empty">加载中...</template>
         <el-table-column prop="ID" label="ID"></el-table-column>
         <el-table-column prop="type" label="业务类型"></el-table-column>
         <el-table-column prop="asset" label="币种"></el-table-column>
@@ -42,7 +44,7 @@
     <el-dialog title="搜索" :visible.sync="dialogFormVisible">
       <div>
         <el-button @click="dialogFormVisible = false">取 消</el-button>
-        <el-button type="primary" @click="searchConfirm">确 定</el-button>
+        <el-button type="primary" @click="searchConfirm(0)">确 定</el-button>
       </div>
       <el-row>
         <el-col :span="12">
@@ -182,8 +184,10 @@ export default {
         alert("不是合法的json");
         return;
       }
-      if (page){
-        data.offset = page * 20
+      if (page) {
+        data.offset = page * 20;
+      } else {
+        this.page = 0;
       }
       try {
         this.loadOrders(data);
@@ -198,12 +202,13 @@ export default {
       this.dialogFormVisible = true;
     },
     async loadOrders(query) {
+      this.tableData = [];
       let s = await axios.post(`${this.gatewayHost}/v1/orders/list`, query, {
         headers: {
           Authorization: "Bearer " + this.token
         }
       });
-      console.log(s);
+      // console.log(s);
       this.tableData = s.data.data;
       this.total = s.data.total;
     },
@@ -256,7 +261,7 @@ export default {
   display: inline-block;
   width: 90px;
   margin-left: 10px;
-    margin-right: 10px;
+  margin-right: 10px;
   height: 40px;
 }
 </style>
