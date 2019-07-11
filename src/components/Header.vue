@@ -2,6 +2,15 @@
   <span class="clearToken">
     <el-button @click="changeHost">改变网关host</el-button>
     <el-button @click="clearToken">清除token</el-button>
+     <el-button @click="saveEnv">保存环境</el-button>
+       <el-select v-model="envName" placeholder="请选择"  @change="useEnv">
+    <el-option
+      v-for="(index,item) in envs"
+      :key="item"
+      :label="item"
+      :value="item">
+    </el-option>
+  </el-select>
   </span>
 </template>
 
@@ -12,7 +21,9 @@ export default {
   data() {
     return {
       token: "",
-      gatewayHost: "http://localhost:8183"
+      gatewayHost: "http://localhost:8183",
+      envName: "",
+      envs:{}
     };
   },
   methods: {
@@ -27,6 +38,33 @@ export default {
         this.gatewayHost = gatewayHost;
         this.saveHost(this.gatewayHost);
       }
+    },
+    loadEnv(){
+      this.envName = window[tokenType].getItem("envName") || ''
+      let s = window[tokenType].getItem("envs") || '{}'
+      this.envs = JSON.parse(s)
+      return this.envs
+    },
+    useEnv(){
+      this.gatewayHost = this.envs[this.envName].gatewayHost
+      this.token = this.envs[this.envName].token
+      window[tokenType].setItem("envName",this.envName)
+      this.saveToken(this.token)
+      this.saveHost(this.gatewayHost)
+      window.location.reload();
+    },
+    saveEnv(){
+      let input = prompt(`请输入环境名,当前${this.envName}`);
+        if (input != null && input !== "null" && input !== "") {
+          this.envName = input
+          let obj = {
+             token: this.token,
+             gatewayHost: this.gatewayHost,
+          }
+          this.envs = this.loadEnv() || {}
+          this.envs[input] = obj
+          window[tokenType].setItem("envs",JSON.stringify(this.envs))
+        }
     },
     getHost() {
       let gatewayHost = window[tokenType].getItem("gatewayHost");
@@ -62,6 +100,7 @@ export default {
   async mounted() {
     let gatewayHost = this.getHost();
     let token = this.getToken();
+    this.loadEnv();
     if (gatewayHost != null && gatewayHost !== "null" && gatewayHost !== "") {
       if (token != null && token !== "null" && token !== "") {
         this.saveToken(token);

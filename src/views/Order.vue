@@ -24,6 +24,7 @@
       <el-table :data="tableData" style="width: 100%" :row-class-name="tableRowClassName">
         <template slot="empty">加载中...</template>
         <el-table-column prop="ID" label="ID"></el-table-column>
+         <el-table-column prop="CreatedAt" label="CreatedAt"></el-table-column>
         <el-table-column prop="type" label="业务类型"></el-table-column>
         <el-table-column prop="asset" label="币种"></el-table-column>
         <el-table-column prop="user" label="用户名"></el-table-column>
