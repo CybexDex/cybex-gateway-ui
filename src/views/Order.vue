@@ -38,6 +38,7 @@
         <el-table-column fixed="right" label="操作" width="100">
           <template slot-scope="scope">
             <el-button @click="handleClick(scope.row)" type="text" size="small">详情</el-button>
+            <el-button v-if="scope.row.currentState === 'PENDING'|| scope.row.currentState==='TERMINATE'" @click="failOrder(scope.row)" type="text" size="small">置为失败</el-button>
           </template>
         </el-table-column>
       </el-table>
@@ -111,22 +112,39 @@ export default {
       this.preUpdateAsset = JSON.stringify(copy, null, 2);
       this.updateVisible = true;
     },
+    async failOrder(row){
+      if (!confirm("是否将子状态标记为失败")){
+        return
+      }
+      try {
+        let s = await axios.post(`${this.gatewayHost}/v1/orders/failed`, {ID:row.ID}, {
+          headers: {
+            Authorization: "Bearer " + this.token
+          }
+        });
+        console.log(s.data);
+        this.pageLoad(0);
+      } catch (e) {
+        alert("请求失败");
+      }
+    },
     tableRowClassName({ row }) {
       if (row.disabled) {
         return "warning-row";
       }
     },
-    lastPage() {
-      this.page = this.page > 0 ? this.page - 1 : this.page;
+    pageLoad(index){
+      this.page = this.page + index;
+      this.page = this.page >= 0 ? this.page : 0
       let data = JSON.parse(this.searchContent);
       data.offset = 20 * this.page;
       this.loadOrders(data);
     },
+    lastPage() {
+      this.pageLoad(-1)
+    },
     nextPage() {
-      this.page = this.page + 1;
-      let data = JSON.parse(this.searchContent);
-      data.offset = 20 * this.page;
-      this.loadOrders(data);
+      this.pageLoad(1)
     },
     changeHost() {
       let gatewayHost = prompt(`请输入gatewayHost,当前${this.gatewayHost}`);
