@@ -24,7 +24,7 @@
       <el-table :data="tableData" style="width: 100%" :row-class-name="tableRowClassName">
         <template slot="empty">加载中...</template>
         <el-table-column prop="ID" label="ID"></el-table-column>
-         <el-table-column prop="CreatedAt" label="CreatedAt"></el-table-column>
+        <el-table-column prop="CreatedAt" label="CreatedAt"></el-table-column>
         <el-table-column prop="type" label="业务类型"></el-table-column>
         <el-table-column prop="asset" label="币种"></el-table-column>
         <el-table-column prop="user" label="用户名"></el-table-column>
@@ -38,7 +38,13 @@
         <el-table-column fixed="right" label="操作" width="100">
           <template slot-scope="scope">
             <el-button @click="handleClick(scope.row)" type="text" size="small">详情</el-button>
-            <el-button v-if="scope.row.currentState === 'PENDING'|| scope.row.currentState==='TERMINATE'" @click="failOrder(scope.row)" type="text" size="small">置为失败</el-button>
+            <el-button @click="showlogs(scope.row)" type="text" size="small">日志</el-button>
+            <el-button
+              v-if="scope.row.currentState === 'PENDING'|| scope.row.currentState==='TERMINATE'"
+              @click="failOrder(scope.row)"
+              type="text"
+              size="small"
+            >置为失败</el-button>
           </template>
         </el-table-column>
       </el-table>
@@ -75,6 +81,18 @@
         <el-button @click="updateVisible = false">好的</el-button>
       </div>
     </el-dialog>
+    <el-dialog title="日志" :visible.sync="islogshow">
+      <el-table :data="logData" style="width: 100%" :row-class-name="tableRowClassName">
+        <template slot="empty">加载中...</template>
+        <el-table-column prop="CreatedAt" label="CreatedAt"></el-table-column>
+        <el-table-column prop="orderID" label="订单ID"></el-table-column>
+        <el-table-column prop="event" label="event"></el-table-column>
+        <el-table-column prop="message" label="message"></el-table-column>
+      </el-table>
+      <div slot="footer" class="dialog-footer">
+        <el-button @click="islogshow = false">好的</el-button>
+      </div>
+    </el-dialog>
   </div>
 </template>
 
@@ -100,7 +118,10 @@ export default {
       search: "",
       total: "",
       page: 0,
-      pagesize: 20
+      pagesize: 20,
+      // log
+      islogshow:false,
+      logData:[]
     };
   },
   components: {
@@ -112,16 +133,35 @@ export default {
       this.preUpdateAsset = JSON.stringify(copy, null, 2);
       this.updateVisible = true;
     },
-    async failOrder(row){
-      if (!confirm("是否将子状态标记为失败")){
-        return
-      }
+    async showlogs(row) {
+      let query = { orderID: row.ID,limit:100 };
       try {
-        let s = await axios.post(`${this.gatewayHost}/v1/orders/failed`, {ID:row.ID}, {
+        let s = await axios.post(`${this.gatewayHost}/v1/orders/logs`, query, {
           headers: {
             Authorization: "Bearer " + this.token
           }
         });
+        console.log(s.data);
+        this.logData = s.data.data
+        this.islogshow = true
+      } catch (e) {
+        alert("请求失败");
+      }
+    },
+    async failOrder(row) {
+      if (!confirm("是否将子状态标记为失败")) {
+        return;
+      }
+      try {
+        let s = await axios.post(
+          `${this.gatewayHost}/v1/orders/failed`,
+          { ID: row.ID },
+          {
+            headers: {
+              Authorization: "Bearer " + this.token
+            }
+          }
+        );
         console.log(s.data);
         this.pageLoad(0);
       } catch (e) {
@@ -133,18 +173,18 @@ export default {
         return "warning-row";
       }
     },
-    pageLoad(index){
+    pageLoad(index) {
       this.page = this.page + index;
-      this.page = this.page >= 0 ? this.page : 0
+      this.page = this.page >= 0 ? this.page : 0;
       let data = JSON.parse(this.searchContent);
       data.offset = 20 * this.page;
       this.loadOrders(data);
     },
     lastPage() {
-      this.pageLoad(-1)
+      this.pageLoad(-1);
     },
     nextPage() {
-      this.pageLoad(1)
+      this.pageLoad(1);
     },
     changeHost() {
       let gatewayHost = prompt(`请输入gatewayHost,当前${this.gatewayHost}`);
