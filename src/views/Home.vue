@@ -6,6 +6,7 @@
       <div id="searchBar">
         <el-input v-model="search" size="mini" placeholder="输入关键字搜索" />
       </div>
+       <el-button @click="assetSwitch">开关</el-button>
       <Header/>
     </div>
     <div>
@@ -51,6 +52,13 @@
         <el-button type="primary" @click="updateAssetConfirm">确 定</el-button>
       </div>
     </el-dialog>
+    <el-dialog title="充提开关" :visible.sync="switchVisible">
+      <el-input type="textarea" autosize placeholder="请输入内容" v-model="switchStr"></el-input>
+      <div slot="footer" class="dialog-footer">
+        <el-button @click="switchVisible = false">取 消</el-button>
+        <el-button type="primary" @click="switchConfirm">确 定</el-button>
+      </div>
+    </el-dialog>
   </div>
 </template>
 
@@ -73,7 +81,13 @@ export default {
       createAsset: createAsset,
       preCreateAsset: "",
       preUpdateAsset: "",
-      search: ""
+      search: "",
+      switchVisible:false,
+      switchTemplate:{
+        deposit:true,
+        withdraw:true
+      },
+      switchStr:""
     };
   },
   components: {
@@ -85,6 +99,10 @@ export default {
       if (row.disabled) {
         return "warning-row";
       }
+    },
+    assetSwitch(){
+      this.switchStr = JSON.stringify(this.switchTemplate, null, 2);
+      this.switchVisible = true;
     },
     changeHost(){
       let gatewayHost = prompt(`请输入gatewayHost,当前${this.gatewayHost}`);
@@ -133,6 +151,30 @@ export default {
         this.loadAssets();
       } catch (e) {
         alert("请求失败");
+      }
+    },
+    async switchConfirm(){
+      let data = null;
+      try {
+        data = JSON.parse(this.switchStr);
+      } catch (e) {
+        alert("不是合法的json");
+        return;
+      }
+      let s
+      try {
+         s = await axios.post(`${this.gatewayHost}/v1/assets/switch`, data, {
+          headers: {
+            Authorization: "Bearer " + this.token
+          }
+        });
+        if (s.data !=="null" && s.data!=null){
+          alert(s.data)
+        }
+        this.switchVisible = false;
+        this.loadAssets();
+      } catch (e) {
+        alert("请求失败"+e);
       }
     },
     async createAssetConfirm() {
