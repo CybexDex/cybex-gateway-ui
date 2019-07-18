@@ -35,6 +35,8 @@
         <el-table-column prop="hash" label="hash"></el-table-column>
         <el-table-column prop="cybhash" label="cybhash"></el-table-column>
         <el-table-column prop="status" label="status"></el-table-column>
+        <el-table-column prop="current" label="子阶段"></el-table-column>
+        <el-table-column prop="currentState" label="子阶段状态"></el-table-column>
         <el-table-column fixed="right" label="操作" width="100">
           <template slot-scope="scope">
             <el-button @click="handleClick(scope.row)" type="text" size="small">详情</el-button>
