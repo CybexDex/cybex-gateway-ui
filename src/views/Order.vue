@@ -102,6 +102,7 @@
 // @ is an alias to /src
 import Header from "@/components/Header.vue";
 import axios from "axios";
+import moment from "moment";
 import searchOrder from "./searchOrder";
 let tokenType = "localStorage";
 export default {
@@ -270,7 +271,10 @@ export default {
         }
       });
       // console.log(s);
-      this.tableData = s.data.data;
+      this.tableData = s.data.data.map(i=>{
+        i.CreatedAt = moment(i.CreatedAt).format("YYYY-MM-DD HH:mm:ss")
+        return i
+      });
       this.total = s.data.total;
     },
     getHost() {
