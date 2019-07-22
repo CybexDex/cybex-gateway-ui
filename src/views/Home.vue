@@ -19,6 +19,7 @@
       >
         <el-table-column prop="ID" label="ID"></el-table-column>
         <el-table-column prop="name" label="币种"></el-table-column>
+        <el-table-column prop="jadeName" label="jade币种"></el-table-column>
         <el-table-column :formatter="cellValueRenderer" label="可充值">
           <template slot-scope="scope">
             <span :class="isOpenClass(scope.row.depositSwitch)">{{ scope.row.depositSwitch }}</span>
