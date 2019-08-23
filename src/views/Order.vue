@@ -47,6 +47,12 @@
               type="text"
               size="small"
             >置为失败</el-button>
+            <el-button
+              v-if="scope.row.type === 'WITHDRAW' && scope.row.current === 'jpsended' && scope.row.currentState==='FAILED'"
+              @click="reWithdrawOrder(scope.row)"
+              type="text"
+              size="small"
+            >重发提现</el-button>
           </template>
         </el-table-column>
       </el-table>
@@ -123,8 +129,8 @@ export default {
       page: 0,
       pagesize: 20,
       // log
-      islogshow:false,
-      logData:[]
+      islogshow: false,
+      logData: []
     };
   },
   components: {
@@ -137,7 +143,7 @@ export default {
       this.updateVisible = true;
     },
     async showlogs(row) {
-      let query = { orderID: row.ID,limit:100 };
+      let query = { orderID: row.ID, limit: 100 };
       try {
         let s = await axios.post(`${this.gatewayHost}/v1/orders/logs`, query, {
           headers: {
@@ -145,8 +151,8 @@ export default {
           }
         });
         console.log(s.data);
-        this.logData = s.data.data
-        this.islogshow = true
+        this.logData = s.data.data;
+        this.islogshow = true;
       } catch (e) {
         alert("请求失败");
       }
@@ -159,6 +165,27 @@ export default {
         let s = await axios.post(
           `${this.gatewayHost}/v1/orders/failed`,
           { ID: row.ID },
+          {
+            headers: {
+              Authorization: "Bearer " + this.token
+            }
+          }
+        );
+        console.log(s.data);
+        this.pageLoad(0);
+      } catch (e) {
+        alert("请求失败");
+      }
+    },
+    async reWithdrawOrder(row) {
+      let msg = window.prompt("输入重发原因")
+      if (!msg || msg.length <1){
+        return
+      }
+      try {
+        let s = await axios.post(
+          `${this.gatewayHost}/v1/orders/rewithdraw`,
+          { ID: row.ID,currentReason:msg },
           {
             headers: {
               Authorization: "Bearer " + this.token
@@ -271,9 +298,9 @@ export default {
         }
       });
       // console.log(s);
-      this.tableData = s.data.data.map(i=>{
-        i.CreatedAt = moment(i.CreatedAt).format("YYYY-MM-DD HH:mm:ss")
-        return i
+      this.tableData = s.data.data.map(i => {
+        i.CreatedAt = moment(i.CreatedAt).format("YYYY-MM-DD HH:mm:ss");
+        return i;
       });
       this.total = s.data.total;
     },
